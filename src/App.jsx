@@ -1,22 +1,38 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import './App.css'
 import { Cart } from './components/cart'
 import { CartToggleButton } from './components/cartToggleButton'
+import { CheckoutForm } from './components/checkoutForm'
 import { FilterSelect } from './components/filterSelect'
 import { ProductGrid } from './components/productGrid'
 import { SearchBar } from './components/searchBar'
+import { CartProvider, useCart } from './context/cartContext'
 import { products } from './components/product'
 // ======================
 // Datos de la tienda
 // ======================
 
-
-function App() {
+function AppContent() {
   // ======================
-  // Estado del carrito
+  // Estado del carrito y navegación
   // ======================
-  const [cartItems, setCartItems] = useState([])
-  const [cartOpen, setCartOpen] = useState(false)
+  const {
+    cartItems,
+    cartOpen,
+    currentView,
+    purchaseStatus,
+    purchaseMessage,
+    total,
+    totalUnits,
+    orders,
+    addToCart,
+    removeFromCart,
+    clearCart,
+    completePurchase,
+    cancelOrder,
+    setCartOpen,
+    setCurrentView,
+  } = useCart()
 
   // ======================
   // Estado de búsqueda y filtros
@@ -25,53 +41,15 @@ function App() {
   const [category, setCategory] = useState('all')
 
   // ======================
-  // Funciones del carrito
+  // Filtro de productos con memoización
   // ======================
-  const addToCart = (product) => {
-    setCartItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.id === product.id)
-
-      if (existingItem) {
-        return currentItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
-        )
-      }
-
-      return [...currentItems, { ...product, quantity: 1 }]
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase())
+      const matchesCategory = category === 'all' || product.category === category
+      return matchesSearch && matchesCategory
     })
-  }
-
-  const removeFromCart = (productId) => {
-    setCartItems((currentItems) =>
-      currentItems
-        .map((item) =>
-          item.id === productId ? { ...item, quantity: item.quantity - 1 } : item,
-        )
-        .filter((item) => item.quantity > 0),
-    )
-  }
-
-  const clearCart = () => {
-    setCartItems([])
-  }
-
-  const buyCart = () => {
-    alert('Gracias por tu compra!')
-    setCartItems([])
-    setCartOpen(false)
-  }
-
-  const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const totalUnits = cartItems.reduce((sum, item) => sum + item.quantity, 0)
-
-  // ======================
-  // Filtro de productos
-  // ======================
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase())
-    const matchesCategory = category === 'all' || product.category === category
-    return matchesSearch && matchesCategory
-  })
+  }, [search, category])
 
   return (
     <main>
@@ -86,7 +64,6 @@ function App() {
         <div className="banner">
           <img src="https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80" alt="Tecnología moderna" />
         </div>
-
       </header>
 
       {/* ====================== */}
@@ -110,23 +87,64 @@ function App() {
       {/* ====================== */}
       {/* Botón flotante del carrito */}
       {/* ====================== */}
-      <CartToggleButton totalUnits={totalUnits} onOpen={() => setCartOpen(true)} />
+      <CartToggleButton
+        totalUnits={totalUnits}
+        onOpen={() => {
+          setCartOpen(true)
+          setCurrentView('cart')
+        }}
+      />
 
       {/* ====================== */}
-      {/* Panel del carrito */}
+      {/* Panel del carrito y checkout */}
       {/* ====================== */}
-      {cartOpen && (
+      {currentView === 'cart' && cartOpen && (
         <Cart
           items={cartItems}
           total={total}
-          onClose={() => setCartOpen(false)}
+          onClose={() => {
+            setCartOpen(false)
+            setCurrentView('catalog')
+          }}
           onAdd={addToCart}
           onRemove={removeFromCart}
           onClear={clearCart}
-          onBuy={buyCart}
+          onBuy={() => setCurrentView('checkout')}
+          purchaseMessage={purchaseMessage}
+          purchaseStatus={purchaseStatus}
+          orders={orders}
+          onCancelOrder={cancelOrder}
+        />
+      )}
+
+      {currentView === 'checkout' && (
+        <CheckoutForm
+          onSubmit={async (values) => {
+            const completed = await completePurchase(values)
+            if (completed) {
+              setCurrentView('catalog')
+              setCartOpen(false)
+            }
+          }}
+          onCancel={() => {
+            setPurchaseStatus('idle')
+            setPurchaseMessage('')
+            setCartOpen(false)
+            setCurrentView('catalog')
+          }}
+          status={purchaseStatus}
+          message={purchaseMessage}
         />
       )}
     </main>
+  )
+}
+
+function App() {
+  return (
+    <CartProvider>
+      <AppContent />
+    </CartProvider>
   )
 }
 

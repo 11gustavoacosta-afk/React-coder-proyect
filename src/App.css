@@ -193,6 +193,90 @@ header {
 }
 
 /* ====================== */
+/* Checkout y mensajes */
+/* ====================== */
+
+.checkout-form {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 20px;
+  background: rgba(17, 17, 17, 0.95);
+}
+
+.checkout-form h3 {
+  margin: 0;
+  color: #fff;
+}
+
+.checkout-form input {
+  width: min(360px, 100%);
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(170, 59, 255, 0.35);
+}
+
+.checkout-actions {
+  display: flex;
+  gap: 10px;
+  width: min(360px, 100%);
+}
+
+.checkout-status,
+.checkout-success,
+.checkout-error {
+  margin: 0;
+  width: min(360px, 100%);
+  text-align: center;
+}
+
+.checkout-status {
+  color: #f0abfc;
+}
+
+.checkout-success {
+  color: #86efac;
+}
+
+.checkout-error {
+  color: #fda4af;
+}
+
+/* ====================== */
+/* Historial de pedidos */
+/* ====================== */
+
+.orders-section {
+  margin: 12px 0;
+  padding-top: 8px;
+  border-top: 1px solid rgba(236, 72, 153, 0.35);
+}
+
+.orders-section h3 {
+  margin: 0 0 8px;
+  color: #fff;
+}
+
+.orders-section p {
+  margin: 4px 0;
+  color: #f0abfc;
+}
+
+.order-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(236, 72, 153, 0.25);
+}
+
+/* ====================== */
 /* Botones principales */
 /* ====================== */
 
