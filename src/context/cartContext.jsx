@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { saveOrder } from '../firebase'
+import { getAvailableStock } from '../helpers'
 
 const CartContext = createContext(null)
 
@@ -48,18 +49,29 @@ export const CartProvider = ({ children }) => {
   // ======================
   // Funciones del carrito
   // ======================
-  const addToCart = (product) => {
+  const addToCart = (product, quantity = 1) => {
+    const requestedQuantity = Number(quantity) > 0 ? Number(quantity) : 1
+
     setCartItems((currentItems) => {
-      const existingItem = currentItems.find((item) => item.id === product.id)
+      const existingItem = currentItems.find((item) => String(item.id) === String(product.id))
+      const currentQuantity = existingItem ? existingItem.quantity : 0
+      const remainingStock = getAvailableStock(product, currentItems)
+
+      if (remainingStock <= 0 || requestedQuantity > remainingStock) {
+        return currentItems
+      }
 
       if (existingItem) {
         return currentItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item,
+          String(item.id) === String(product.id)
+            ? { ...item, quantity: item.quantity + requestedQuantity }
+            : item,
         )
       }
 
-      return [...currentItems, { ...product, quantity: 1 }]
+      return [...currentItems, { ...product, quantity: requestedQuantity, stock: 100 }]
     })
+
     setPurchaseStatus('idle')
     setPurchaseMessage('')
   }
@@ -68,7 +80,7 @@ export const CartProvider = ({ children }) => {
     setCartItems((currentItems) =>
       currentItems
         .map((item) =>
-          item.id === productId ? { ...item, quantity: item.quantity - 1 } : item,
+          String(item.id) === String(productId) ? { ...item, quantity: item.quantity - 1 } : item,
         )
         .filter((item) => item.quantity > 0),
     )
@@ -90,7 +102,7 @@ export const CartProvider = ({ children }) => {
   }
 
   const total = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    () => cartItems.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0),
     [cartItems],
   )
 
@@ -175,6 +187,8 @@ export const CartProvider = ({ children }) => {
       cancelOrder,
       setCartOpen,
       setCurrentView,
+      setPurchaseStatus,
+      setPurchaseMessage,
     }),
     [cartItems, cartOpen, currentView, purchaseStatus, purchaseMessage, total, totalUnits, orders],
   )

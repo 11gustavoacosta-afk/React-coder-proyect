@@ -1,27 +1,36 @@
 import { Button } from './button'
 import { CartActions } from './cartActions'
-import { CartItem } from './cartItem'
+import { formatPrice } from '../helpers'
 
 export const Cart = ({ items, total, onClose, onAdd, onRemove, onClear, onBuy, purchaseMessage, purchaseStatus, orders, onCancelOrder }) => {
   return (
-    <section className="cart-panel">
-      <div className="cart-panel-header">
+    <section className="cart-page">
+      <div className="cart-page-header">
         <h2>Carrito de compras</h2>
-        <Button text="X" className="close-cart" onClick={onClose} />
+        {onClose && <Button text="X" className="close-cart" onClick={onClose} />}
       </div>
 
-      <div className="cart-panel-body">
-        {items.length === 0 ? (
-          <p>Tu carrito está vacío.</p>
-        ) : (
-          items.map((item) => (
-            <CartItem key={item.id} item={item} onAdd={onAdd} onRemove={onRemove} />
-          ))
-        )}
-      </div>
+      {items.length === 0 ? (
+        <p className="empty-state">Tu carrito está vacío.</p>
+      ) : (
+        <div className="cart-page-grid">
+          {items.map((item) => (
+            <article key={item.id} className="prodCard cart-product-card">
+              <h3>{item.name}</h3>
+              <p>{item.quantity} × {formatPrice(item.price)}</p>
+              <p>Subtotal: {formatPrice(item.quantity * item.price)}</p>
 
-      <div className="cart-panel-footer">
-        <p>Total: ${total.toFixed(2)}</p>
+              <div className="product-actions">
+                <Button text="-" className="secondary-button" onClick={() => onRemove(item.id)} />
+                <Button text="+" className="primary-button" onClick={() => onAdd(item)} />
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+
+      <div className="cart-page-footer">
+        <p>Total: {formatPrice(total)}</p>
         {purchaseStatus === 'success' && <p className="checkout-success">{purchaseMessage}</p>}
         {purchaseStatus === 'error' && <p className="checkout-error">{purchaseMessage}</p>}
 
@@ -35,7 +44,7 @@ export const Cart = ({ items, total, onClose, onAdd, onRemove, onClear, onBuy, p
                 <div>
                   <strong>{order.customerName}</strong>
                   <p>{order.items.length} productos</p>
-                  <p>${order.total.toFixed(2)}</p>
+                  <p>{formatPrice(order.total)}</p>
                 </div>
                 <Button text="Cancelar" className="secondary-button" onClick={() => onCancelOrder(order.id)} />
               </div>
